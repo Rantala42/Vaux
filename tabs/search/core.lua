@@ -13,7 +13,7 @@ StaticPopupDialogs.AUX_SEARCH_TABLE_FULL = {
     hideOnEscape = 1,
 }
 
-RESULTS, SAVED, FILTER = aux.enum(3)
+RESULTS, SAVED, FILTER, BUY_LIST = aux.enum(4)
 
 function aux.handle.LOAD()
 	set_subtab(SAVED)
@@ -56,9 +56,11 @@ function set_subtab(tab)
     search_results_button:UnlockHighlight()
     saved_searches_button:UnlockHighlight()
     new_filter_button:UnlockHighlight()
+    buy_list_button:UnlockHighlight()
     frame.results:Hide()
     frame.saved:Hide()
     frame.filter:Hide()
+    frame.buy_list:Hide()
 
     if tab == RESULTS then
         frame.results:Show()
@@ -69,6 +71,9 @@ function set_subtab(tab)
     elseif tab == FILTER then
         frame.filter:Show()
         new_filter_button:LockHighlight()
+    elseif tab == BUY_LIST then
+        frame.buy_list:Show()
+        buy_list_button:LockHighlight()
     end
 end
 

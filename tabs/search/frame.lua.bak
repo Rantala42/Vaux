@@ -631,8 +631,13 @@ function aux.handle.INIT_UI()
         shopping_lists_panel = panel
     end
     do
+        local label = gui.label(frame.buy_list.builder, gui.font_size.medium)
+        label:SetPoint('TOPLEFT', 10, -10)
+        label:SetText('Buy List Builder')
+    end
+    do
         local editbox = gui.editbox(frame.buy_list.builder)
-        editbox:SetPoint('TOPLEFT', 10, -14)
+        editbox:SetPoint('TOPLEFT', 10, -36)
         editbox:SetWidth(215)
         editbox:SetHeight(24)
         editbox.enter = function() buy_list_item_input:SetFocus() end
