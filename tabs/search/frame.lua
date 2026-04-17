@@ -626,22 +626,39 @@ function aux.handle.INIT_UI()
         btn:SetText('New')
         btn:SetScript('OnClick', reset_buy_list_editor)
     end
-    do
-        local btn = gui.button(frame.saved.builder)
-        btn:SetPoint('LEFT', buy_list_name_input, 'RIGHT', 65, 0)
-        btn:SetWidth(70)
-        btn:SetHeight(24)
-        btn:SetText('Save List')
-        btn:SetScript('OnClick', save_buy_list)
-    end
-    do
-        local editbox = gui.editbox(frame.saved.builder)
-        editbox.complete = completion.complete(function() return aux.account_data.auctionable_items end)
-        editbox:SetPoint('TOPLEFT', buy_list_name_input, 'BOTTOMLEFT', 0, -24)
-        editbox:SetWidth(245)
-        editbox:SetHeight(24)
-        editbox.char = function() this:complete() end
-        editbox.enter = function() add_buy_list_item() end
+	do
+		local btn = gui.button(frame.saved.builder)
+		btn:SetPoint('LEFT', buy_list_name_input, 'RIGHT', 65, 0)
+		btn:SetWidth(70)
+		btn:SetHeight(24)
+		btn:SetText('Save List')
+		btn:SetScript('OnClick', save_buy_list)
+	end
+	do
+		local btn = gui.button(frame.saved.builder)
+		btn:SetPoint('TOPLEFT', buy_list_name_input, 'BOTTOMLEFT', 0, -24)
+		btn:SetWidth(90)
+		btn:SetHeight(24)
+		btn:SetText('Load Selected')
+		btn:SetScript('OnClick', load_selected_buy_list)
+	end
+	do
+		local btn = gui.button(frame.saved.builder)
+		btn:SetPoint('LEFT', buy_list_name_input, 'RIGHT', 65, 0)
+		btn:SetPoint('TOP', buy_list_name_input, 'BOTTOM', 0, -24)
+		btn:SetWidth(70)
+		btn:SetHeight(24)
+		btn:SetText('Delete')
+		btn:SetScript('OnClick', delete_selected_buy_list)
+	end
+	do
+		local editbox = gui.editbox(frame.saved.builder)
+		editbox.complete = completion.complete(function() return aux.account_data.auctionable_items end)
+		editbox:SetPoint('TOPLEFT', buy_list_name_input, 'BOTTOMLEFT', 0, -54)
+		editbox:SetWidth(245)
+		editbox:SetHeight(24)
+		editbox.char = function() this:complete() end
+		editbox.enter = function() add_buy_list_item() end
         local label = gui.label(editbox, gui.font_size.small)
         label:SetPoint('BOTTOMLEFT', editbox, 'TOPLEFT', -2, 1)
         label:SetText('Item Name')
@@ -671,13 +688,16 @@ function aux.handle.INIT_UI()
     buy_list_items_listing = listing.new(buy_list_items_panel)
     buy_list_items_listing:SetColInfo{{name='#', width=.12, align='CENTER'}, {name='Items in Current List', width=.88}}
 
-    for listing in T.temp-T.set(favorite_searches_listing, recent_searches_listing) do
-        for k, v in handlers do
-            listing:SetHandler(k, v)
-        end
-    end
-    for k, v in buy_list_item_handlers do
-        buy_list_items_listing:SetHandler(k, v)
-    end
-    update_buy_list_editor()
+	for listing in T.temp-T.set(favorite_searches_listing, recent_searches_listing) do
+		for k, v in handlers do
+			listing:SetHandler(k, v)
+		end
+	end
+	favorite_searches_listing:SetSelection(function(data)
+		return data and data.kind == 'shopping_list' and selected_buy_list_index == data.index
+	end)
+	for k, v in buy_list_item_handlers do
+		buy_list_items_listing:SetHandler(k, v)
+	end
+	update_buy_list_editor()
 end
