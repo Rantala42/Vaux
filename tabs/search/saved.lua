@@ -12,6 +12,8 @@ local buy_list_editor = {
 	edit_index = nil,
 }
 
+selected_buy_list_index = nil
+
 function aux.handle.LOAD()
 	recent_searches = aux.realm_data.recent_searches
 	favorite_searches = aux.realm_data.favorite_searches
@@ -78,13 +80,29 @@ function reset_buy_list_editor()
 	update_buy_list_editor()
 end
 
+function select_buy_list(index)
+	selected_buy_list_index = index
+	if favorite_searches_listing and favorite_searches_listing.Update then
+		favorite_searches_listing:Update()
+	end
+end
+
 function load_buy_list_editor(index)
+	select_buy_list(index)
 	local shopping_list = shopping_lists and shopping_lists[index]
 	if not shopping_list then return end
 	buy_list_editor.name = shopping_list.name or ''
 	buy_list_editor.items = aux.copy(shopping_list.items or T.empty)
 	buy_list_editor.edit_index = index
 	update_buy_list_editor()
+end
+
+function load_selected_buy_list()
+	if not selected_buy_list_index or not (shopping_lists and shopping_lists[selected_buy_list_index]) then
+		aux.print('Select a buy list first.')
+		return
+	end
+	load_buy_list_editor(selected_buy_list_index)
 end
 
 function add_buy_list_item(name)
@@ -118,6 +136,34 @@ function remove_buy_list_item(index)
 	end
 end
 
+function delete_buy_list(index)
+	if not (shopping_lists and shopping_lists[index]) then return end
+	tremove(shopping_lists, index)
+	if buy_list_editor.edit_index then
+		if buy_list_editor.edit_index == index then
+			reset_buy_list_editor()
+		elseif buy_list_editor.edit_index > index then
+			buy_list_editor.edit_index = buy_list_editor.edit_index - 1
+		end
+	end
+	if selected_buy_list_index then
+		if selected_buy_list_index == index then
+			selected_buy_list_index = nil
+		elseif selected_buy_list_index > index then
+			selected_buy_list_index = selected_buy_list_index - 1
+		end
+	end
+	update_search_listings()
+end
+
+function delete_selected_buy_list()
+	if not selected_buy_list_index or not (shopping_lists and shopping_lists[selected_buy_list_index]) then
+		aux.print('Select a buy list first.')
+		return
+	end
+	delete_buy_list(selected_buy_list_index)
+end
+
 function save_buy_list()
 	local name = aux.trim(buy_list_name_input and buy_list_name_input:GetText() or buy_list_editor.name or '')
 	if name == '' then
@@ -136,8 +182,10 @@ function save_buy_list()
 
 	if buy_list_editor.edit_index and shopping_lists[buy_list_editor.edit_index] then
 		shopping_lists[buy_list_editor.edit_index] = shopping_list
+		select_buy_list(buy_list_editor.edit_index)
 	else
 		tinsert(shopping_lists, 1, shopping_list)
+		select_buy_list(1)
 	end
 
 	update_search_listings()
@@ -164,7 +212,7 @@ function update_search_listings()
 	for i = 1, getn(shopping_lists or T.empty) do
 		local shopping_list = shopping_lists[i]
 		tinsert(favorite_search_rows, T.map(
-			'cols', T.list(T.map('value', aux.color.green('L')), T.map('value', shopping_list_summary(shopping_list))),
+			'cols', T.list(T.map('value', selected_buy_list_index == i and aux.color.gold('L') or aux.color.green('L')), T.map('value', shopping_list_summary(shopping_list))),
 			'kind', 'shopping_list',
 			'list', shopping_list,
 			'index', i
@@ -217,6 +265,7 @@ handlers = {
 		if not data then return end
 
 		if data.kind == 'shopping_list' then
+			select_buy_list(data.index)
 			if button == 'LeftButton' and IsShiftKeyDown() then
 				set_filter(data.list.filter_string or get_shopping_list_filter_string(data.list.items))
 			elseif button == 'RightButton' and IsShiftKeyDown() then
@@ -229,7 +278,7 @@ handlers = {
 					'Edit', function() load_buy_list_editor(data.index) end,
 					'Move Up', function() move_up(shopping_lists, data.index); u() end,
 					'Move Down', function() move_down(shopping_lists, data.index); u() end,
-					'Delete', function() tremove(shopping_lists, data.index); if buy_list_editor.edit_index == data.index then reset_buy_list_editor() end; u() end
+					'Delete', function() delete_buy_list(data.index) end
 				)
 			end
 			return
